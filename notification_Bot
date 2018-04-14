@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+
+import discord
+import configparser
+
+config = configparser.ConfigParser()
+config.read('config/config.ini')
+TOKEN = config['bot_info']['token']
+DEFAULT_CHANNEL = config['channel_info']['default']
+
+client = discord.Client()
+member_list = []
+
+text_chat = discord.Object(id=DEFAULT_CHANNEL)
+
+# Botがログインしたら
+@client.event
+async def on_ready():
+    for member in client.get_all_members():
+        member_list.append(member.display_name)
+    print(member_list)
+    print('Logged in as')
+    print(client.user.name)
+    print(client.user.id)
+    print('------')
+
+# メッセージが送られてきたら
+@client.event
+async def on_message(message):
+    # debug print
+    print(message.author,":",message.content)
+
+    # おはようメッセージ
+    if message.content.startswith("おはよう"):
+        if client.user != message.author:
+            msg = "おはようございます" + message.author.name + "さん！"
+            await client.send_message(message.channel, msg)
+
+    # メンバーリスト
+    if message.content.startswith("メンバーリスト"):
+        msg = "メンバー：" + ','.join(member_list)
+        await client.send_message(message.channel,msg)
+
+# メンバのステータスが変更されたら
+@client.event
+async def on_member_update(before, after):
+    if before.status != after.status:
+        msg = after.display_name + " さんが " + str(after.status) + " になりました"
+        await client.send_message(text_chat,msg)
+
+# Bot起動
+client.run(TOKEN)
